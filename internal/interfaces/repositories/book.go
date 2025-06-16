@@ -1,6 +1,6 @@
 package repositories
 
-import "github.com/maithuc2003/GIN_golang_framework/internal/models"
+import "github.com/maithuc2003/Test_GIN_golang/internal/models"
 
 type BookRepository interface {
 	CreateBook(book *models.Book) error

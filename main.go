@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/maithuc2003/GIN_golang_framework/config"
-	"github.com/maithuc2003/GIN_golang_framework/internal/routes"
+	"github.com/maithuc2003/Test_GIN_golang/config"
+	"github.com/maithuc2003/Test_GIN_golang/internal/routes"
 )
 
 func main() {

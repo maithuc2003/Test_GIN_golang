@@ -1,8 +1,8 @@
-package repositories
+package book
 
 import (
-	"github.com/maithuc2003/GIN_golang_framework/internal/interfaces/repositories"
-	"github.com/maithuc2003/GIN_golang_framework/internal/models"
+	"github.com/maithuc2003/Test_GIN_golang/internal/interfaces/repositories"
+	"github.com/maithuc2003/Test_GIN_golang/internal/models"
 
 	"gorm.io/gorm"
 )

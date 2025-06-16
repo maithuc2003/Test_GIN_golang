@@ -1,10 +1,11 @@
 package book
 
 import (
-	"github.com/maithuc2003/GIN_golang_framework/internal/interfaces/repositories"
-	"github.com/maithuc2003/GIN_golang_framework/internal/models"
 	"errors"
 	"time"
+
+	"github.com/maithuc2003/Test_GIN_golang/internal/interfaces/repositories"
+	"github.com/maithuc2003/Test_GIN_golang/internal/models"
 )
 
 type BookService struct {
@@ -26,5 +27,14 @@ func (s *BookService) CreateBook(book *models.Book) error {
 }
 
 func (s *BookService) GetAllBooks() ([]models.Book, error) {
-	return s.bookRepo.GetAllBooks()
+	books, err := s.bookRepo.GetAllBooks()
+	if err != nil {
+		return nil, err
+	}
+
+	if len(books) == 0 {
+		return nil, errors.New("no books found")
+	}
+
+	return books, nil
 }

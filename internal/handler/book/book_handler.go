@@ -1,8 +1,8 @@
 package book
 
 import (
-	"github.com/maithuc2003/GIN_golang_framework/internal/interfaces/service"
-	"github.com/maithuc2003/GIN_golang_framework/internal/models"
+	"github.com/maithuc2003/Test_GIN_golang/internal/interfaces/service"
+	"github.com/maithuc2003/Test_GIN_golang/internal/models"
 	"net/http"
 
 	"github.com/gin-gonic/gin"

@@ -1,11 +1,11 @@
 package routes
 
 import (
-	"github.com/maithuc2003/GIN_golang_framework/internal/handler/book"
-	RepInterface "github.com/maithuc2003/GIN_golang_framework/internal/interfaces/repositories"
-	ServiceInterface "github.com/maithuc2003/GIN_golang_framework/internal/interfaces/service"
-	Repo "github.com/maithuc2003/GIN_golang_framework/internal/repositories"
-	ServiceImp "github.com/maithuc2003/GIN_golang_framework/internal/service"
+	"github.com/maithuc2003/Test_GIN_golang/internal/handler/book"
+	RepInterface "github.com/maithuc2003/Test_GIN_golang/internal/interfaces/repositories"
+	ServiceInterface "github.com/maithuc2003/Test_GIN_golang/internal/interfaces/service"
+	Repo "github.com/maithuc2003/Test_GIN_golang/internal/repositories/book"
+	ServiceImp "github.com/maithuc2003/Test_GIN_golang/internal/service/book"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

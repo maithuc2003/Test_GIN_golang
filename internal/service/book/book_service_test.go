@@ -1,13 +1,14 @@
 package book_test
 
 import (
-	"github.com/maithuc2003/GIN_golang_framework/internal/interfaces/service"
-	"github.com/maithuc2003/GIN_golang_framework/internal/models"
-	bookImpl "github.com/maithuc2003/GIN_golang_framework/internal/service/book"
-	"github.com/maithuc2003/GIN_golang_framework/internal/service/book/mocks"
 	"errors"
 	"testing"
 	"time"
+
+	"github.com/maithuc2003/Test_GIN_golang/internal/interfaces/service"
+	"github.com/maithuc2003/Test_GIN_golang/internal/models"
+	bookImpl "github.com/maithuc2003/Test_GIN_golang/internal/service/book"
+	"github.com/maithuc2003/Test_GIN_golang/internal/service/book/mocks"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -73,6 +74,62 @@ func TestCreateBook(t *testing.T) {
 				assert.WithinDuration(t, time.Now(), tc.input.CreatedAt, time.Second)
 				assert.WithinDuration(t, time.Now(), tc.input.UpdatedAt, time.Second)
 			}
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestGetAllBooks(t *testing.T) {
+	tests := []struct {
+		name         string
+		mockBooks    []models.Book
+		mockError    error
+		expectError  bool
+		expectedLen  int
+		expectedMsg  string
+	}{
+		{
+			name: "success - return books",
+			mockBooks: []models.Book{
+				{ID: 1, Title: "Clean Code", AuthorID: 1},
+				{ID: 2, Title: "Go Programming", AuthorID: 2},
+			},
+			mockError:   nil,
+			expectError: false,
+			expectedLen: 2,
+		},
+		{
+			name:         "repo error",
+			mockBooks:    nil,
+			mockError:    errors.New("db error"),
+			expectError:  true,
+			expectedMsg:  "db error",
+		},
+		{
+			name:         "no books found",
+			mockBooks:    []models.Book{},
+			mockError:    nil,
+			expectError:  true,
+			expectedMsg:  "no books found",
+		},
+	}
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			mockRepo := new(mocks.MockBookRepo)
+			mockRepo.On("GetAllBooks").Return(tc.mockBooks, tc.mockError)
+
+			var svc service.BookServiceInterface = bookImpl.NewBookService(mockRepo)
+			books, err := svc.GetAllBooks()
+
+			if tc.expectError {
+				assert.Error(t, err)
+				assert.EqualError(t, err, tc.expectedMsg)
+			} else {
+				assert.NoError(t, err)
+				assert.Len(t, books, tc.expectedLen)
+			}
+
 			mockRepo.AssertExpectations(t)
 		})
 	}
