@@ -1,9 +1,10 @@
 package book
 
 import (
+	"net/http"
+
 	"github.com/maithuc2003/Test_GIN_golang/internal/interfaces/service"
 	"github.com/maithuc2003/Test_GIN_golang/internal/models"
-	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,6 +19,7 @@ func NewBookHandler(bookService service.BookServiceInterface) *BookHandler {
 
 // POST/ books
 func (h *BookHandler) CreateBookHandler(c *gin.Context) {
+
 	var book models.Book
 	if err := c.ShouldBindJSON(&book); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
