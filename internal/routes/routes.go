@@ -10,6 +10,7 @@ func SetupRouter(db *gorm.DB) *gin.Engine {
 
 	RegisterBookRoutes(r, db)
 	RegisterUserRoutes(r, db)
-
+	RegisterAuthorRoutes(r, db)
+	RegisterOrderRoutes(r, db)
 	return r
 }
