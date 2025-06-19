@@ -19,15 +19,11 @@ var jwtSecret = func() []byte {
 func JwtSecret() []byte {
 	return jwtSecret
 }
-func GenerateJWT(userID uint, username string, role string) (string, error) {
+func GenerateJWT(userID uint, username string) (string, error) {
 	claims := jwt.MapClaims{
 		"user_id":  userID,
 		"username": username,
-		"sub":      username,                              // Subject
-		"iss":      "maithuc",                             // Issuer
-		"aud":      role,                                  // Audience (ví dụ: "admin" hoặc "user") role permission
 		"exp":      time.Now().Add(72 * time.Hour).Unix(), // Expiration
-		"iat":      time.Now().Unix(),                     // Issued at book action order action (list , add )
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString(jwtSecret)

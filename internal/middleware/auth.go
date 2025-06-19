@@ -18,12 +18,11 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		// Cắt "Bearer " ra để lấy token thực sự
+		// Cắt "Bearer " để lấy token thật sự
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
 
 		// Parse token và xác minh chữ ký
 		token, err := jwt.Parse(tokenString, func(t *jwt.Token) (interface{}, error) {
-			// Xác minh phương thức ký là HMAC
 			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, jwt.ErrSignatureInvalid
 			}
@@ -36,13 +35,16 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			c.Set("user_id", claims["user_id"])
-			c.Set("username", claims["username"])
-			c.Set("role", claims["aud"])
-
-			// Nếu muốn kiểm tra role admin tại đây
+		// Lấy thông tin từ token và lưu vào context
+		if claims, ok := token.Claims.(jwt.MapClaims); ok {
+			if userID, ok := claims["user_id"].(float64); ok {
+				c.Set("user_id", int(userID))
+			}
+			if username, ok := claims["username"].(string); ok {
+				c.Set("username", username)
+			}
 			if role, ok := claims["aud"].(string); ok {
+				c.Set("role", role)
 				if role != "admin" {
 					c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
 					c.Abort()
@@ -50,6 +52,7 @@ func AuthMiddleware() gin.HandlerFunc {
 				}
 			}
 		}
+
 		c.Next()
 	}
 }

@@ -8,13 +8,16 @@ import (
 
 type UserHandler struct {
 	userService service.UserServiceInterface
-	JwtGenFunc  func(userID uint, username string , role string) (string, error)
+	JwtGenFunc  func(userID uint, username string) (string, error)
 }
 
 func NewUserHandler(userService service.UserServiceInterface) *UserHandler {
 	return &UserHandler{
 		userService: userService,
-		JwtGenFunc:  jwtutil.GenerateJWT}
+		JwtGenFunc: func(userID uint, username string) (string, error) {
+			return jwtutil.GenerateJWT(userID, username)
+		},
+	}
 }
 
 func (h *UserHandler) GetByUsername(c *gin.Context) {
@@ -53,7 +56,7 @@ func (h *UserHandler) LoginUser(c *gin.Context) {
 		return
 	}
 
-	token, err := h.JwtGenFunc(user.ID, req.Username, user.Role)
+	token, err := h.JwtGenFunc(user.ID, req.Username)
 	if err != nil {
 		c.JSON(500, gin.H{"error": "Failed to generate token"})
 		return

@@ -4,9 +4,9 @@ import (
 	"errors"
 	"testing"
 
+	mocks "github.com/maithuc2003/Test_GIN_golang/internal/mocks/repositories"
 	"github.com/maithuc2003/Test_GIN_golang/internal/models"
 	"github.com/maithuc2003/Test_GIN_golang/internal/service/user"
-	"github.com/maithuc2003/Test_GIN_golang/internal/service/user/mocks"
 	"github.com/stretchr/testify/assert"
 	"golang.org/x/crypto/bcrypt"
 )

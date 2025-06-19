@@ -16,12 +16,18 @@ func RegisterBookRoutes(r *gin.Engine, db *gorm.DB) {
 	var bookService ServiceInterface.BookServiceInterface = ServiceImp.NewBookService(bookRepo)
 	bookHandler := book.NewBookHandler(bookService)
 
-	// r.POST("/book/add", bookHandler.CreateBookHandler)
-	r.GET("/books", bookHandler.GetAllBooksHandler)
+	// Public routes
+	bookRoutes := r.Group("/books")
+	{
+		bookRoutes.GET("", bookHandler.GetAllBooksHandler)
+		bookRoutes.GET("/:id", bookHandler.GetByBookID)
+	}
 
-	auth := r.Group("/")
-	auth.Use(middleware.AuthMiddleware())
-	auth.POST("/book/add", bookHandler.CreateBookHandler) // Chỉ admin được gọi
-	
-
+	// Protected routes with Auth + RBAC
+	auth := r.Group("/books", middleware.AuthMiddleware())
+	{
+		auth.POST("/add", middleware.RBACMiddleware("book/create"), bookHandler.CreateBookHandler)
+		auth.PUT("/:id", middleware.RBACMiddleware("book/update"), bookHandler.UpdateById)
+		auth.DELETE("/:id", middleware.RBACMiddleware("book/delete"), bookHandler.DeleteById)
+	}
 }

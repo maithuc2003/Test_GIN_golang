@@ -16,14 +16,18 @@ func RegisterOrderRoutes(r *gin.Engine, db *gorm.DB) {
 	var orderService ServiceInterface.OrderServiceInterface = ServiceImp.NewOrderService(orderRepo)
 	orderHandler := order.NewOrderHandler(orderService)
 
-	// Public routes
-	r.GET("/orders", orderHandler.GetAllOrders)
-	r.GET("/orders/:id", orderHandler.GetByOrderID)
+	authorRoutes := r.Group("/orders")
+	{
+		authorRoutes.GET("", orderHandler.GetAllOrders)
+		authorRoutes.GET("/:id", orderHandler.GetByOrderID)
+	}
 
-	// Authenticated (admin) routes
-	auth := r.Group("/")
-	auth.Use(middleware.AuthMiddleware())
-	auth.POST("/orders", orderHandler.CreateOrder)
-	auth.PUT("/orders/:id", orderHandler.UpdateByOrderID)
-	auth.DELETE("/orders/:id", orderHandler.DeleteByOrderID)
+	// Protected author routes
+	auth := r.Group("/orders", middleware.AuthMiddleware())
+	{
+		auth.POST("/add", middleware.RBACMiddleware("order/create"), orderHandler.CreateOrder)
+		auth.PUT("/:id", middleware.RBACMiddleware("order/update"), orderHandler.UpdateByOrderID)
+		auth.DELETE("/:id", middleware.RBACMiddleware("order/delete"), orderHandler.DeleteByOrderID)
+	}
+
 }

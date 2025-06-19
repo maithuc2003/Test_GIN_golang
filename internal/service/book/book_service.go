@@ -2,6 +2,7 @@ package book
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/maithuc2003/Test_GIN_golang/internal/interfaces/repositories"
@@ -37,4 +38,37 @@ func (s *BookService) GetAllBooks() ([]models.Book, error) {
 	}
 
 	return books, nil
+}
+func (s *BookService) GetByBookID(id int) (*models.Book, error) {
+	if id <= 0 {
+		return nil, errors.New("invalid book ID")
+	}
+	return s.bookRepo.GetByBookID(id)
+}
+
+func (s *BookService) DeleteById(id int) (*models.Book, error) {
+	if id <= 0 {
+		return nil, errors.New("invalid book ID")
+	}
+	return s.bookRepo.DeleteById(id)
+}
+
+func (s *BookService) UpdateById(book *models.Book) (*models.Book, error) {
+	if book == nil {
+		return nil, errors.New("book is nil")
+	}
+	if book.ID <= 0 {
+		return nil, errors.New("invalid book ID")
+	}
+	if strings.TrimSpace(book.Title) == "" {
+		return nil, errors.New("book title is required")
+	}
+	if book.AuthorID <= 0 {
+		return nil, errors.New("book author ID is required")
+	}
+	if book.Stock < 0 {
+		return nil, errors.New("book quantity cannot be negative")
+	}
+
+	return s.bookRepo.UpdateById(book)
 }

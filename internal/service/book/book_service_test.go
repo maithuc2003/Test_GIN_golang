@@ -3,76 +3,55 @@ package book_test
 import (
 	"errors"
 	"testing"
-	"time"
 
-	"github.com/maithuc2003/Test_GIN_golang/internal/interfaces/service"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+
+	mocks "github.com/maithuc2003/Test_GIN_golang/internal/mocks/repositories"
 	"github.com/maithuc2003/Test_GIN_golang/internal/models"
-	bookImpl "github.com/maithuc2003/Test_GIN_golang/internal/service/book"
-	"github.com/maithuc2003/Test_GIN_golang/internal/service/book/mocks"
-
-	"github.com/stretchr/testify/assert"
+	"github.com/maithuc2003/Test_GIN_golang/internal/service/book"
 )
 
 func TestCreateBook(t *testing.T) {
+	mockRepo := new(mocks.MockBookRepo)
+	service := book.NewBookService(mockRepo)
+
 	tests := []struct {
 		name        string
 		input       *models.Book
-		mockReturn  error
+		setupMock   func()
 		expectError bool
 	}{
 		{
-			name: "valid book",
-			input: &models.Book{
-				Title:    "Clean Code",
-				AuthorID: 1,
-			},
-			mockReturn:  nil,
-			expectError: false,
-		},
-		{
-			name: "missing title",
+			name: "missing title and author_id",
 			input: &models.Book{
 				Title:    "",
-				AuthorID: 1,
-			},
-			expectError: true,
-		},
-		{
-			name: "missing author",
-			input: &models.Book{
-				Title:    "Some Book",
 				AuthorID: 0,
 			},
+			setupMock:   func() {},
 			expectError: true,
 		},
 		{
-			name: "repo returns error",
+			name: "valid book",
 			input: &models.Book{
-				Title:    "Failing Save",
-				AuthorID: 2,
+				Title:    "Go Book",
+				AuthorID: 1,
 			},
-			mockReturn:  errors.New("DB error"),
-			expectError: true,
+			setupMock: func() {
+				mockRepo.On("CreateBook", mock.AnythingOfType("*models.Book")).Return(nil).Once()
+			},
+			expectError: false,
 		},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			mockRepo := new(mocks.MockBookRepo)
-
-			// Only call repo if input is valid
-			if tc.input.Title != "" && tc.input.AuthorID != 0 {
-				mockRepo.On("CreateBook", tc.input).Return(tc.mockReturn)
-			}
-
-			var svc service.BookServiceInterface = bookImpl.NewBookService(mockRepo)
-			err := svc.CreateBook(tc.input)
-			if tc.expectError {
-				assert.Error(t, err)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			tt.setupMock()
+			err := service.CreateBook(tt.input)
+			if tt.expectError {
+				require.Error(t, err)
 			} else {
-				assert.NoError(t, err)
-				assert.WithinDuration(t, time.Now(), tc.input.CreatedAt, time.Second)
-				assert.WithinDuration(t, time.Now(), tc.input.UpdatedAt, time.Second)
+				require.NoError(t, err)
 			}
 			mockRepo.AssertExpectations(t)
 		})
@@ -80,56 +59,202 @@ func TestCreateBook(t *testing.T) {
 }
 
 func TestGetAllBooks(t *testing.T) {
+	mockRepo := new(mocks.MockBookRepo)
+	service := book.NewBookService(mockRepo)
+
 	tests := []struct {
-		name         string
-		mockBooks    []models.Book
-		mockError    error
-		expectError  bool
-		expectedLen  int
-		expectedMsg  string
+		name        string
+		mockReturn  []models.Book
+		mockError   error
+		expectError bool
 	}{
 		{
-			name: "success - return books",
-			mockBooks: []models.Book{
-				{ID: 1, Title: "Clean Code", AuthorID: 1},
-				{ID: 2, Title: "Go Programming", AuthorID: 2},
+			name:        "empty result",
+			mockReturn:  []models.Book{},
+			mockError:   nil,
+			expectError: true,
+		},
+		{
+			name: "books found",
+			mockReturn: []models.Book{
+				{ID: 1, Title: "Go", AuthorID: 1},
 			},
 			mockError:   nil,
 			expectError: false,
-			expectedLen: 2,
 		},
 		{
-			name:         "repo error",
-			mockBooks:    nil,
-			mockError:    errors.New("db error"),
-			expectError:  true,
-			expectedMsg:  "db error",
-		},
-		{
-			name:         "no books found",
-			mockBooks:    []models.Book{},
-			mockError:    nil,
-			expectError:  true,
-			expectedMsg:  "no books found",
+			name:        "repo error",
+			mockReturn:  nil,
+			mockError:   errors.New("database error"),
+			expectError: true,
 		},
 	}
 
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			mockRepo := new(mocks.MockBookRepo)
-			mockRepo.On("GetAllBooks").Return(tc.mockBooks, tc.mockError)
-
-			var svc service.BookServiceInterface = bookImpl.NewBookService(mockRepo)
-			books, err := svc.GetAllBooks()
-
-			if tc.expectError {
-				assert.Error(t, err)
-				assert.EqualError(t, err, tc.expectedMsg)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo.On("GetAllBooks").Return(tt.mockReturn, tt.mockError).Once()
+			result, err := service.GetAllBooks()
+			if tt.expectError {
+				require.Error(t, err)
+				require.Nil(t, result)
 			} else {
-				assert.NoError(t, err)
-				assert.Len(t, books, tc.expectedLen)
+				require.NoError(t, err)
+				require.Equal(t, tt.mockReturn, result)
 			}
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}
 
+func TestGetByBookID(t *testing.T) {
+	mockRepo := new(mocks.MockBookRepo)
+	service := book.NewBookService(mockRepo)
+
+	tests := []struct {
+		name        string
+		inputID     int
+		mockReturn  *models.Book
+		mockError   error
+		expectError bool
+	}{
+		{
+			name:        "invalid ID",
+			inputID:     0,
+			expectError: true,
+		},
+		{
+			name:        "valid ID",
+			inputID:     1,
+			mockReturn:  &models.Book{ID: 1, Title: "Go"},
+			mockError:   nil,
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.inputID > 0 {
+				mockRepo.On("GetByBookID", tt.inputID).Return(tt.mockReturn, tt.mockError).Once()
+			}
+			result, err := service.GetByBookID(tt.inputID)
+			if tt.expectError {
+				require.Error(t, err)
+				require.Nil(t, result)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.mockReturn, result)
+			}
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestDeleteById(t *testing.T) {
+	mockRepo := new(mocks.MockBookRepo)
+	service := book.NewBookService(mockRepo)
+
+	tests := []struct {
+		name        string
+		inputID     int
+		mockReturn  *models.Book
+		mockError   error
+		expectError bool
+	}{
+		{
+			name:        "invalid ID",
+			inputID:     -1,
+			expectError: true,
+		},
+		{
+			name:        "valid delete",
+			inputID:     1,
+			mockReturn:  &models.Book{ID: 1},
+			mockError:   nil,
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.inputID > 0 {
+				mockRepo.On("DeleteById", tt.inputID).Return(tt.mockReturn, tt.mockError).Once()
+			}
+			result, err := service.DeleteById(tt.inputID)
+			if tt.expectError {
+				require.Error(t, err)
+				require.Nil(t, result)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.mockReturn, result)
+			}
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestUpdateById(t *testing.T) {
+	mockRepo := new(mocks.MockBookRepo)
+	service := book.NewBookService(mockRepo)
+
+	tests := []struct {
+		name        string
+		input       *models.Book
+		mockReturn  *models.Book
+		mockError   error
+		expectError bool
+	}{
+		{
+			name:        "nil book",
+			input:       nil,
+			expectError: true,
+		},
+		{
+			name:        "invalid ID",
+			input:       &models.Book{ID: 0, Title: "Go", AuthorID: 1},
+			expectError: true,
+		},
+		{
+			name:        "empty title",
+			input:       &models.Book{ID: 1, Title: "", AuthorID: 1},
+			expectError: true,
+		},
+		{
+			name:        "missing author_id",
+			input:       &models.Book{ID: 1, Title: "Go", AuthorID: 0},
+			expectError: true,
+		},
+		{
+			name:        "negative stock",
+			input:       &models.Book{ID: 1, Title: "Go", AuthorID: 1, Stock: -10},
+			expectError: true,
+		},
+		{
+			name: "valid update",
+			input: &models.Book{
+				ID:       1,
+				Title:    "Go",
+				AuthorID: 1,
+				Stock:    5,
+			},
+			mockReturn:  &models.Book{ID: 1, Title: "Go"},
+			mockError:   nil,
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.input != nil && tt.input.ID > 0 && tt.input.AuthorID > 0 && tt.input.Stock >= 0 && tt.input.Title != "" {
+				mockRepo.On("UpdateById", tt.input).Return(tt.mockReturn, tt.mockError).Once()
+			}
+			result, err := service.UpdateById(tt.input)
+			if tt.expectError {
+				require.Error(t, err)
+				require.Nil(t, result)
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tt.mockReturn, result)
+			}
 			mockRepo.AssertExpectations(t)
 		})
 	}

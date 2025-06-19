@@ -14,16 +14,15 @@ func TestGenerateJWT_TableDriven(t *testing.T) {
 		name     string
 		userID   uint
 		username string
-		role     string
 	}{
-		{"Valid user 1", 1, "john", "admin"},
-		{"Valid user 99", 99, "maithuc2003", "user"},
+		{"Valid user 1", 1, "john"},
+		{"Valid user 99", 99, "maithuc2003"},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Act
-			tokenStr, err := jwtutil.GenerateJWT(tt.userID, tt.username, tt.role)
+			tokenStr, err := jwtutil.GenerateJWT(tt.userID, tt.username)
 
 			// Assert
 			require.NoError(t, err)
@@ -45,8 +44,6 @@ func TestGenerateJWT_TableDriven(t *testing.T) {
 
 			require.EqualValues(t, tt.userID, int(claims["user_id"].(float64)))
 			require.Equal(t, tt.username, claims["username"])
-			require.Equal(t, "maithuc", claims["iss"])
-			require.Equal(t, tt.role, claims["aud"])
 
 			// Check expiration time is roughly 72 hours from now
 			require.WithinDuration(t,

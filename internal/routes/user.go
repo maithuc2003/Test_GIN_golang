@@ -17,6 +17,4 @@ func RegisterUserRoutes(r *gin.Engine, db *gorm.DB) {
 
 	r.GET("/users", userHandler.GetByUsername)
 	r.POST("/user/login", userHandler.LoginUser)
-
-	
 }

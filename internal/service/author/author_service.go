@@ -40,6 +40,7 @@ func (s *AuthorService) CreateAuthor(author *models.Author) error {
 	}
 	return nil
 }
+
 func (s *AuthorService) GetAllAuthors() ([]*models.Author, error) {
 	authors, err := s.repo.GetAllAuthors()
 	if err != nil {
@@ -48,7 +49,7 @@ func (s *AuthorService) GetAllAuthors() ([]*models.Author, error) {
 	if len(authors) == 0 {
 		return nil, errors.New("no authors found in the system")
 	}
-	return s.repo.GetAllAuthors()
+	return authors, nil
 }
 
 func (s *AuthorService) GetByAuthorID(id int) (*models.Author, error) {

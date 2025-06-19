@@ -64,7 +64,7 @@ func (h *OrderHandler) GetByOrderID(c *gin.Context) {
 }
 
 func (h *OrderHandler) DeleteByOrderID(c *gin.Context) {
-	idStr := c.Query("id")
+	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid or missing 'id' parameter"})
@@ -73,14 +73,25 @@ func (h *OrderHandler) DeleteByOrderID(c *gin.Context) {
 
 	order, err := h.serviceOrder.DeleteByOrderID(id)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Order not found"})
+		if err.Error() == "not found" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Order not found"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
+	if order == nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unexpected nil order"})
+		return
+	}
+
 	c.JSON(http.StatusOK, order)
 }
 
 func (h *OrderHandler) UpdateByOrderID(c *gin.Context) {
-	idStr := c.Query("id")
+	idStr := c.Param("id") // lấy tham số path :id
+
 	id, err := strconv.Atoi(idStr)
 	if err != nil || id <= 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid or missing 'id' parameter"})
